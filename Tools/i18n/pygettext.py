@@ -5,7 +5,7 @@
 # Minimally patched to make it even more xgettext compatible
 # by Peter Funk <pf@artcom-gmbh.de>
 #
-# 2002-11-22 Jürgen Hermann <jh@web.de>
+# 2002-11-22 Jï¿½rgen Hermann <jh@web.de>
 # Added checks that _() only contains string literals, and
 # command line args are resolved to module lists, i.e. you
 # can now pass a filename, a module or package name, or a
@@ -207,7 +207,7 @@ def make_escapes(pass_nonascii):
     global escapes, escape
     if pass_nonascii:
         # Allow non-ascii characters to pass through so that e.g. 'msgid
-        # "Höhe"' would result not result in 'msgid "H\366he"'.  Otherwise we
+        # "Hï¿½he"' would result not result in 'msgid "H\366he"'.  Otherwise we
         # escape any character outside the 32..126 range.
         mod = 128
         escape = escape_ascii
@@ -344,6 +344,9 @@ class TokenEater:
         if ttype == tokenize.NAME and tstring in opts.keywords:
             self.__state = self.__keywordseen
             return
+        if ttype == token.FSTRING_START:
+            self.__state = self.__fstringseen
+            return
         if ttype == tokenize.STRING:
             maybe_fstring = ast.parse(tstring, mode='eval').body
             if not isinstance(maybe_fstring, ast.JoinedStr):
@@ -434,6 +437,25 @@ class TokenEater:
             if self.__data:
                 self.__addentry(EMPTYSTRING.join(self.__data))
             self.__state = self.__waiting
+        elif ttype == tokenize.STRING and is_literal_string(tstring):
+            self.__data.append(safe_eval(tstring))
+        elif ttype not in [tokenize.COMMENT, token.INDENT, token.DEDENT,
+                           token.NEWLINE, tokenize.NL]:
+            # warn if we see anything else than STRING or whitespace
+            print(_(
+                '*** %(file)s:%(lineno)s: Seen unexpected token "%(token)s"'
+                ) % {
+                'token': tstring,
+                'file': self.__curfile,
+                'lineno': self.__lineno
+                }, file=sys.stderr)
+            self.__state = self.__waiting
+
+    def __fstringseen(self, ttype, tstring, lineno):
+        if ttype == token.FSTRING_END:
+            self.__state = self.__waiting
+        elif ttype == token.FSTRING_MIDDLE:
+            self.__state = self.__fstringseen
         elif ttype == tokenize.STRING and is_literal_string(tstring):
             self.__data.append(safe_eval(tstring))
         elif ttype not in [tokenize.COMMENT, token.INDENT, token.DEDENT,
