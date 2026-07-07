@@ -1859,7 +1859,7 @@ handle_resurrected_objects(struct collection_state *state)
         }
 
         Py_ssize_t refcount = (op->ob_ref_shared >> _Py_REF_SHARED_SHIFT);
-        if (refcount > INT32_MAX) {
+        if (refcount >= _Py_IMMORTAL_REFCNT_LOCAL) {
             // The refcount is too big to fit in `ob_ref_local`. Mark the
             // object as immortal and bail out.
             gc_clear_unreachable(op);
@@ -1868,7 +1868,7 @@ handle_resurrected_objects(struct collection_state *state)
             continue;
         }
 
-        op->ob_ref_local += (uint32_t)refcount;
+        op->ob_ref_local += (uint8_t)refcount;
 
         // Subtract one to account for the reference from the worklist.
         op->ob_ref_local -= 1;

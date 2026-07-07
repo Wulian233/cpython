@@ -161,8 +161,8 @@ struct _object {
     uint16_t ob_flags;
     PyMutex ob_mutex;           // per-object lock
     uint8_t ob_gc_bits;         // gc-related state
-    uint32_t ob_ref_local;      // local reference count
-    Py_ssize_t ob_ref_shared;   // shared (atomic) reference count
+    uint8_t ob_ref_local;       // local reference count
+    int32_t ob_ref_shared;      // shared (atomic) reference count
     PyTypeObject *ob_type;
 };
 #endif // !defined(_Py_OPAQUE_PYOBJECT)

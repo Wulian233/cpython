@@ -466,6 +466,12 @@ class SysModuleTest(unittest.TestCase):
         if hasattr(sys, "gettotalrefcount"):
             self.assertIsInstance(sys.gettotalrefcount(), int)
 
+    def test_refcount_many_refs(self):
+        obj = []
+        base = sys.getrefcount(obj)
+        refs = [obj] * 300
+        self.assertEqual(sys.getrefcount(obj), base + len(refs))
+
     def test_getframe(self):
         self.assertRaises(TypeError, sys._getframe, 42, 42)
         self.assertRaises(ValueError, sys._getframe, 2000000000)
